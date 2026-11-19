@@ -12,7 +12,7 @@ foxtoken｜AI API 中转服务，让模型接入更简单。🌐https://foxtoken
 
 | 分组 | 模型 | 目录 | 模块数量 | 在线体验链接 |
 | --- | --- | --- | --- | --- |
-| CCMAX-A01 | **claude-opus-5-5** | [CCMAX-A01/](./CCMAX-A01/) | 7 个 JS 模块 + 1 个 HTML 页面 | [在线体验](https://fox-token-api.github.io/foxtoken-ccmax/CCMAX-A01/) |
+| CCMAX-A01 | **claude-opus-5-5** | [CCMAX-A01](./CCMAX-A01) | 7 个 JS 模块 + 1 个 HTML 页面 | [在线体验](https://fox-token-api.github.io/foxtoken-ccmax/CCMAX-A01) |
 
 
 

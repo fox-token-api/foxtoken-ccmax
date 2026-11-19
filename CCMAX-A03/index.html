@@ -1,0 +1,185 @@
+<title>鹈鹕海岸骑行</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Outfit:wght@400;600;800&display=swap">
+<style>
+:root{
+  /* full-bleed 3D canvas; HUD glass chips pinned to corners; sunset-ink palette */
+  --ink:#0a0f1e;
+  --glass:rgba(12,16,34,.58);
+  --glass-hi:rgba(28,34,62,.78);
+  --line:rgba(255,214,180,.20);
+  --text:#fff3e6;
+  --muted:#c3b4c9;
+  --scarf:#e5383b;
+  --sun:#ffb05c;
+  --sea:#62d2d8;
+  --gold:#ffd34d;
+  --f-display:"Bungee","Outfit","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --f-body:"Outfit","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(--text);font-family:var(--f-body);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+#hud{position:fixed;inset:0;pointer-events:none;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:14px;padding:10px 14px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);min-width:0}
+.big{font-family:var(--f-display);font-size:clamp(22px,4vw,34px);line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.big small{font-family:var(--f-body);font-size:13px;font-weight:600;color:var(--muted);margin-left:6px;letter-spacing:.08em}
+.row{display:flex;gap:8px;align-items:baseline;font-size:13px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.row b{color:var(--text);font-weight:800}
+.score .big{color:var(--gold)}
+.speedo{text-align:right}
+.speedo .row{justify-content:flex-end}
+#combo.hot{color:var(--scarf)}
+.q{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.06em}
+.mid{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0}
+.chip{background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;letter-spacing:.08em;white-space:nowrap}
+.chip.auto{border-color:rgba(98,210,216,.6);color:var(--sea);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+#toasts{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 96px);transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(360px,calc(100% - 32px))}
+.toast{display:flex;gap:12px;align-items:center;background:var(--glass-hi);border:1px solid rgba(255,211,77,.55);border-radius:12px;padding:10px 14px;width:100%;box-sizing:border-box;animation:tin .4s ease-out,tout .5s ease-in 3.6s forwards}
+.toast .medal{flex:none;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,var(--gold) 45%,#b07a10);display:grid;place-items:center;font-family:var(--f-display);color:#4a3000;font-size:14px}
+.toast b{display:block;font-size:14px}
+.toast span{font-size:12px;color:var(--muted)}
+@keyframes tin{from{transform:translateY(-12px);opacity:0}}
+@keyframes tout{to{transform:translateY(-8px);opacity:0}}
+.bottom{display:flex;justify-content:center}
+.hint{font-size:12px;color:var(--muted);background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:6px 12px;text-align:center;max-width:100%}
+.hint kbd{font-family:var(--f-body);font-weight:800;color:var(--text);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;margin:0 2px;font-size:11px}
+#pops{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.pop{position:absolute;font-family:var(--f-display);font-size:20px;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.45);transform:translate(-50%,-50%);animation:rise 1s ease-out forwards;white-space:nowrap}
+.pop.gold{color:var(--gold);font-size:26px}
+.pop.bad{color:#ff8a7a}
+@keyframes rise{to{transform:translate(-50%,-160%);opacity:0}}
+.btnbar{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto}
+.ib{font-family:var(--f-body);font-size:12px;font-weight:600;color:var(--text);background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:6px 11px;cursor:pointer;letter-spacing:.04em}
+.ib:hover{background:var(--glass-hi)}
+.ib:focus-visible,.tb:focus-visible,.go:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.mid{margin-top:40px}
+#touch{position:fixed;inset:auto 0 0 0;display:none;justify-content:space-between;align-items:flex-end;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:max(16px,env(safe-area-inset-bottom,0px));pointer-events:none;gap:12px}
+#touch.on{display:flex}
+.cluster{display:grid;gap:10px;pointer-events:auto}
+.cluster.l{grid-template-columns:repeat(2,64px)}
+.cluster.r{grid-template-columns:repeat(2,64px)}
+.tb{width:64px;height:64px;border-radius:18px;background:var(--glass);border:1px solid var(--line);color:var(--text);font-family:var(--f-body);font-weight:800;font-size:15px;display:grid;place-items:center;touch-action:none;cursor:pointer}
+.tb.down{background:rgba(229,56,59,.45);border-color:var(--scarf)}
+.tb small{display:block;font-size:10px;font-weight:600;color:var(--muted)}
+.overlay{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 30%,rgba(10,15,30,.25),rgba(6,8,18,.8));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;box-sizing:border-box;z-index:5;overflow:auto}
+.card{background:var(--glass-hi);border:1px solid var(--line);border-radius:20px;padding:26px 26px 22px;width:min(560px,100%);box-sizing:border-box;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.card h1{font-family:var(--f-display);font-weight:400;font-size:clamp(28px,6vw,44px);line-height:1.05;margin:0 0 4px;letter-spacing:.01em;text-wrap:balance;color:var(--sun)}
+.card h1 em{font-style:normal;color:var(--scarf)}
+.card p.lede{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.6;max-width:60ch}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px;margin-bottom:20px;align-items:center}
+.keys kbd{font-family:var(--f-body);font-weight:800;font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 7px;white-space:nowrap;justify-self:start}
+.keys span{color:var(--muted)}
+.go{font-family:var(--f-display);font-size:18px;color:#2a0d00;background:linear-gradient(180deg,#ffc477,var(--sun));border:0;border-radius:14px;padding:14px 22px;cursor:pointer;width:100%;letter-spacing:.04em}
+.go:hover{filter:brightness(1.07)}
+.fine{font-size:11px;color:var(--muted);margin-top:10px;text-align:center}
+.alist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin:14px 0 18px}
+.ach{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0}
+.ach .medal{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;font-family:var(--f-display);font-size:12px;color:var(--muted)}
+.ach.got .medal{background:radial-gradient(circle at 35% 30%,#fff3b0,var(--gold) 45%,#b07a10);color:#4a3000}
+.ach b{display:block;font-size:13px}
+.ach span{display:block;font-size:11px;color:var(--muted);line-height:1.35}
+.ach:not(.got) b{color:var(--muted)}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.cardhead h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;color:var(--sun)}
+.cardhead span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lb{position:fixed;left:0;right:0;height:0;background:#000;pointer-events:none;transition:height .6s ease;z-index:1}
+#hud,#pops{z-index:2}
+.btnbar,#touch{z-index:3}
+#toasts{z-index:4}
+body.touch .hintwrap{display:none}
+#lbT{top:0}#lbB{bottom:0}
+body.cine .lb{height:9vh}
+@media (max-width:640px){
+  .top{flex-wrap:wrap}
+  .mid{order:3;flex-basis:100%;margin-top:44px}
+  .btnbar{top:calc(env(safe-area-inset-top,0px) + 92px)}
+  #toasts{top:calc(env(safe-area-inset-top,0px) + 170px)}
+  .row{font-size:12px}
+  .panel{padding:8px 10px}
+  .hint{display:none}
+  .mid{margin-top:44px}
+  .chip{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){.chip.auto{animation:none}.toast{animation:none}}
+</style>
+
+<canvas id="c"></canvas>
+<div class="lb" id="lbT"></div><div class="lb" id="lbB"></div>
+<div id="hud">
+  <div class="top">
+    <div class="panel score">
+      <div class="big" id="score">0</div>
+      <div class="row"><span>鱼</span><b id="fish">0</b><span>连击</span><b id="combo">×0</b><span>最高</span><b id="best">0</b></div>
+    </div>
+    <div class="mid">
+      <div class="chip" id="camName">追尾镜头</div>
+      <div class="chip auto" id="auto" hidden>自动驾驶中 · 按任意键接管</div>
+    </div>
+    <div class="panel speedo">
+      <div class="big"><span id="kmh">0</span><small>KM/H</small></div>
+      <div class="row"><span><b id="rpm">0</b> rpm</span><span><b id="km">0.00</b> km</span><span id="clock">18:40</span></div>
+      <div class="q" id="qual">画质 自适应</div>
+    </div>
+  </div>
+  <div class="bottom hintwrap">
+    <div class="hint"><kbd>W</kbd><kbd>S</kbd> 加减速 · <kbd>A</kbd><kbd>D</kbd> 变道 · <kbd>空格</kbd> 跳跃 · <kbd>T</kbd> 展翅抬前轮 · <kbd>C</kbd>/<kbd>1</kbd>-<kbd>5</kbd> 镜头 · <kbd>H</kbd> 成就 · <kbd>M</kbd> 静音</div>
+  </div>
+</div>
+<div class="btnbar">
+  <button class="ib" id="bCam" type="button">镜头</button>
+  <button class="ib" id="bAch" type="button">成就 <span id="achCount">0/14</span></button>
+  <button class="ib" id="bMute" type="button">声音 开</button>
+</div>
+<div id="toasts"></div>
+<div id="pops"></div>
+<div id="touch">
+  <div class="cluster l">
+    <button class="tb" data-k="left" type="button">◀<small>变道</small></button>
+    <button class="tb" data-k="right" type="button">▶<small>变道</small></button>
+    <button class="tb" data-k="brake" type="button">▼<small>减速</small></button>
+    <button class="tb" data-k="accel" type="button">▲<small>加速</small></button>
+  </div>
+  <div class="cluster r">
+    <button class="tb" data-k="wing" type="button">展翅<small>抬前轮</small></button>
+    <button class="tb" data-k="jump" type="button">跳<small>空格</small></button>
+  </div>
+</div>
+
+<div class="overlay" id="start">
+  <div class="card">
+    <h1>鹈鹕<em>海岸</em>骑行</h1>
+    <p class="lede">戴着头盔和墨镜的鹈鹕沿海岸公路骑车，从黄昏一路骑进星空月夜。飞鱼会从海里跃上车道，变道张嘴把它们接住。你不操作时，它会自己开去追鱼。</p>
+    <div class="keys">
+      <kbd>W / S</kbd><span>加速、减速，音乐节奏跟着踏频走</span>
+      <kbd>A / D</kbd><span>左右变道，对准飞鱼</span>
+      <kbd>空格</kbd><span>跳跃，够到高处的鱼，跨过螃蟹</span>
+      <kbd>T（按住）</kbd><span>展翅抬前轮，翅膀能兜住更宽的鱼</span>
+      <kbd>C 或 1–5</kbd><span>切换镜头：追尾、侧面、高空、电影运镜、鹈鹕视角</span>
+      <kbd>H / M</kbd><span>成就列表 / 静音</span>
+    </div>
+    <button class="go" id="go" type="button">开始骑行</button>
+    <div class="fine">音效与音乐全部由浏览器实时合成 · 手机上会显示触屏按钮</div>
+  </div>
+</div>
+
+<div class="overlay" id="achv" hidden>
+  <div class="card">
+    <div class="cardhead"><h2>成就</h2><span id="achSum">0 / 14</span></div>
+    <div class="alist" id="alist"></div>
+    <button class="go" id="achClose" type="button">继续骑行</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/props.js"></script>
+<script src="js/rider.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/game.js"></script>

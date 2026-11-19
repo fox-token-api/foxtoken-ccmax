@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>鹈鹕海岸骑行</title>
+<style>
+:root{--ink:#fff;--panel:rgba(10,14,30,.55);--accent:#ff4d3d;--gold:#ffd25a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1020;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--ink);user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+.box{position:absolute;background:var(--panel);backdrop-filter:blur(6px);border-radius:12px;padding:10px 14px;text-shadow:0 1px 2px #0008}
+#tl{top:12px;left:12px;min-width:150px}
+#tr{top:12px;right:12px;text-align:right;min-width:150px}
+.big{font-size:28px;font-weight:700;line-height:1.1}
+.sm{font-size:12px;opacity:.8}
+.row{font-size:14px;margin-top:3px}
+#combo{color:var(--gold);font-weight:700}
+#tags{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tag{background:var(--panel);padding:5px 10px;border-radius:999px;font-size:13px}
+.tag.auto{background:rgba(40,160,120,.7)}
+#toasts{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:linear-gradient(90deg,#3a2a00cc,#6b4a00cc);border:1px solid var(--gold);padding:8px 16px;border-radius:10px;font-size:15px;animation:tin .4s ease-out,tout .5s ease-in 3.2s forwards}
+.toast b{color:var(--gold)}
+@keyframes tin{from{opacity:0;transform:translateY(-14px)}}
+@keyframes tout{to{opacity:0;transform:translateY(-10px)}}
+#pops{position:absolute;inset:0;overflow:hidden}
+.pop{position:absolute;font-weight:800;font-size:20px;color:#fff;text-shadow:0 2px 4px #000a;animation:pup 1s ease-out forwards;transform:translate(-50%,-50%)}
+.pop.gold{color:var(--gold);font-size:26px}
+.pop.bad{color:#ff8a7a}
+@keyframes pup{to{opacity:0;margin-top:-60px}}
+#panel,#start{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,8,20,.6);pointer-events:auto}
+#panel.hide,#start.hide{display:none}
+.card{background:rgba(16,22,44,.92);border-radius:16px;padding:22px 26px;max-width:min(560px,92vw);max-height:86vh;overflow:auto;box-shadow:0 10px 40px #0008}
+.card h1{margin:0 0 6px;font-size:28px}
+.card h2{margin:0 0 12px;font-size:20px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:14px 0}
+kbd{background:#fff2;border:1px solid #fff4;border-radius:6px;padding:1px 7px;font-family:inherit;font-size:13px}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 26px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit}
+.ach{display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid #fff1;font-size:14px;opacity:.45}
+.ach.on{opacity:1}
+.ach .ic{width:30px;height:30px;border-radius:50%;background:#fff2;display:flex;align-items:center;justify-content:center;flex:none}
+.ach.on .ic{background:var(--gold);color:#3a2a00}
+.ach .d{font-size:12px;opacity:.75}
+#touch{position:fixed;inset:0;pointer-events:none;display:none}
+#touch.show{display:block}
+.tb{position:absolute;pointer-events:auto;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.35);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:inherit;backdrop-filter:blur(4px)}
+.tb.on{background:rgba(255,77,61,.55)}
+.tb.s{width:46px;height:46px;font-size:12px;border-radius:12px}
+#bL{left:16px;bottom:90px}#bR{left:92px;bottom:90px}
+#bW{right:92px;bottom:160px}#bS{right:92px;bottom:20px}
+#bJ{right:16px;bottom:90px;width:72px;height:72px}#bT{right:168px;bottom:90px}
+#bC{right:12px;top:150px}#bA{right:64px;top:150px}#bM{right:116px;top:150px}
+@media (max-width:600px){.big{font-size:22px}.box{padding:7px 10px}#tl,#tr{min-width:0}}
+</style>
+</head>
+<body>
+<div id="hud">
+  <div class="box" id="tl">
+    <div class="sm">得分</div><div class="big" id="score">0</div>
+    <div class="row">🐟 <span id="fish">0</span> 条 · <span id="combo"></span></div>
+  </div>
+  <div class="box" id="tr">
+    <div class="big"><span id="spd">0</span><span class="sm"> km/h</span></div>
+    <div class="row"><span id="dist">0.00</span> km</div>
+    <div class="row sm">踏频 <span id="rpm">0</span> rpm · <span id="bpm">0</span> BPM</div>
+    <div class="row sm">画质 <span id="q">高</span> · <span id="fps">60</span> fps</div>
+  </div>
+  <div id="pops"></div>
+  <div id="toasts"></div>
+  <div id="tags"><span class="tag" id="camTag">追尾镜头</span><span class="tag" id="timeTag">黄昏</span><span class="tag auto" id="autoTag" style="display:none">自动驾驶</span></div>
+</div>
+
+<div id="touch">
+  <button class="tb" id="bL" data-k="left">◀</button>
+  <button class="tb" id="bR" data-k="right">▶</button>
+  <button class="tb" id="bW" data-k="up">加速</button>
+  <button class="tb" id="bS" data-k="down">刹车</button>
+  <button class="tb" id="bJ" data-k="jump">跳跃</button>
+  <button class="tb" id="bT" data-k="wing">展翅</button>
+  <button class="tb s" id="bC" data-k="cam">镜头</button>
+  <button class="tb s" id="bA" data-k="ach">成就</button>
+  <button class="tb s" id="bM" data-k="mute">声音</button>
+</div>
+
+<div id="panel" class="hide"><div class="card"><h2>成就 <span class="sm" id="achCount"></span></h2><div id="achList"></div><p style="text-align:center;margin:16px 0 0"><button class="btn" id="closePanel">继续骑行</button></p></div></div>
+
+<div id="start"><div class="card">
+  <h1>鹈鹕海岸骑行</h1>
+  <div class="sm">戴着头盔和墨镜的鹈鹕，沿着海岸公路一路追鱼，从黄昏骑进星空月夜。</div>
+  <div class="keys">
+    <span><kbd>W</kbd> <kbd>S</kbd></span><span>加速 / 减速</span>
+    <span><kbd>A</kbd> <kbd>D</kbd></span><span>变道抓鱼</span>
+    <span><kbd>空格</kbd></span><span>跳跃（抓高处的鱼、越过螃蟹和路障）</span>
+    <span><kbd>T</kbd></span><span>展翅并抬起前轮</span>
+    <span><kbd>C</kbd> / <kbd>1</kbd>-<kbd>5</kbd></span><span>切换镜头（追尾 / 侧拍 / 航拍 / 电影运镜 / 鹈鹕视角）</span>
+    <span><kbd>J</kbd> <kbd>M</kbd></span><span>成就列表 / 静音</span>
+  </div>
+  <div class="sm">几秒不操作，鹈鹕会自己开车去追鱼。</div>
+  <p style="text-align:center;margin:18px 0 0"><button class="btn" id="go">出发</button></p>
+</div></div>
+
+<script src="lib/three.min.js"></script>
+<script src="js/sky.js"></script>
+<script src="js/ocean.js"></script>
+<script src="js/scenery.js"></script>
+<script src="js/scarf.js"></script>
+<script src="js/pelican.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/achievements.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<title>鹈鹕海岸骑行</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Noto+Sans+SC:wght@400;700&family=ZCOOL+QingKe+HuangYou&display=swap">
+<style>
+/* 全屏画布 + 四角仪表；单一深色世界观（夕阳琥珀 / 围巾红 / 月光米白 / 深海墨蓝） */
+:root {
+  --ink: #0c1626;
+  --glass: rgba(10, 20, 36, 0.62);
+  --line: rgba(243, 235, 211, 0.18);
+  --moon: #f3ebd3;
+  --dim: #a9b4c6;
+  --amber: #ffb347;
+  --scarf: #e8432e;
+  --sea: #3fb6c4;
+  --gold: #ffd75e;
+  --f-num: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --f-text: "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  --f-title: "ZCOOL QingKe HuangYou", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; overflow: hidden; background: var(--ink); color: var(--moon);
+  font-family: var(--f-text); -webkit-user-select: none; user-select: none;
+  touch-action: none;
+}
+canvas#gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.hud {
+  position: fixed; inset: 0; pointer-events: none;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.panel {
+  background: var(--glass); border: 1px solid var(--line); border-radius: 10px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+}
+.tl { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); left: max(16px, env(safe-area-inset-left, 0px));
+  display: grid; grid-template-columns: auto auto; gap: 2px 14px; padding: 10px 14px; }
+.lbl { font-size: 11px; letter-spacing: 0.12em; color: var(--dim); align-self: center; }
+.val { font-family: var(--f-num); font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; text-align: right; }
+.val.score { color: var(--amber); font-size: 26px; }
+.combo { color: var(--scarf); }
+.tr { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  width: 150px; padding: 8px 10px 10px; text-align: center; }
+.tr canvas { width: 130px; height: 82px; display: block; margin: 0 auto; }
+.spd { font-family: var(--f-num); font-weight: 700; font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; margin-top: -26px; }
+.spd small { font-size: 11px; color: var(--dim); font-weight: 500; letter-spacing: 0.1em; }
+.rpm { font-family: var(--f-num); font-size: 13px; color: var(--sea); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.tc { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: calc(100% - 380px); }
+.chip { padding: 5px 11px; border-radius: 999px; font-size: 12px; letter-spacing: 0.08em; white-space: nowrap; }
+.chip.auto { color: var(--ink); background: var(--amber); border-color: transparent; font-weight: 700; }
+.msg { position: absolute; left: 50%; top: 30%; transform: translateX(-50%); text-align: center;
+  font-family: var(--f-title); font-size: clamp(28px, 6vw, 54px); color: var(--gold);
+  text-shadow: 0 3px 0 rgba(0,0,0,.35), 0 0 24px rgba(255,179,71,.45); opacity: 0; transition: opacity .25s; white-space: nowrap; }
+.msg.show { opacity: 1; }
+.toasts { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 150px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.toast { padding: 9px 14px; display: flex; gap: 10px; align-items: center; animation: tin .35s ease-out; max-width: 280px; }
+.toast b { color: var(--gold); font-size: 13px; display: block; }
+.toast span { font-size: 12px; color: var(--dim); }
+.toast i { font-style: normal; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--scarf); color: var(--moon); font-family: var(--f-num); font-weight: 700; font-size: 13px; flex: none; }
+@keyframes tin { from { transform: translateX(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+.bl { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  font-size: 11.5px; color: var(--dim); line-height: 1.7; padding: 8px 12px; }
+.bl kbd { font-family: var(--f-num); color: var(--moon); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-right: 3px; }
+.btns { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  display: flex; gap: 8px; pointer-events: auto; }
+button { font-family: var(--f-text); color: var(--moon); cursor: pointer; }
+.hb { padding: 7px 12px; font-size: 12px; }
+.hb:focus-visible, .tbtn:focus-visible, .go:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+.pov { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s;
+  background: linear-gradient(to bottom, rgba(4,8,14,.88) 0, rgba(4,8,14,.5) 5%, transparent 10%),
+              radial-gradient(ellipse 85% 75% at 50% 50%, transparent 62%, rgba(4,8,14,.8) 100%); }
+.pov.on { opacity: 1; }
+.tint { position: fixed; inset: 0; pointer-events: none; background: rgba(60, 40, 10, .18); opacity: 0; transition: opacity .4s; }
+.tint.on { opacity: 1; }
+
+.touch { position: fixed; inset: auto 0 0 0; display: none; justify-content: space-between; align-items: flex-end;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); pointer-events: none; }
+.touch.on { display: flex; }
+.tgrp { display: flex; gap: 10px; pointer-events: auto; align-items: flex-end; }
+.tcol { display: flex; flex-direction: column; gap: 10px; }
+.tbtn { width: 64px; height: 64px; border-radius: 50%; font-size: 13px; font-weight: 700; touch-action: none;
+  background: var(--glass); border: 1px solid var(--line); }
+.tbtn.big { width: 76px; height: 76px; }
+.tbtn.act { background: var(--scarf); border-color: var(--scarf); }
+body.touchmode .bl { display: none; }
+body.touchmode .btns { bottom: auto; top: calc(max(12px, env(safe-area-inset-top, 0px)) + 132px); right: auto; left: max(16px, env(safe-area-inset-left, 0px)); flex-direction: column; align-items: flex-start; }
+
+.overlay { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(8, 14, 26, .55);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); z-index: 5; }
+.card { max-width: 520px; width: 100%; padding: 26px 26px 22px; max-height: 86vh; overflow: auto; }
+.card h1 { font-family: var(--f-title); font-weight: 400; font-size: clamp(38px, 9vw, 60px); margin: 0; line-height: 1;
+  color: var(--amber); text-wrap: balance; text-shadow: 0 0 30px rgba(232,67,46,.35); }
+.card h1 em { font-style: normal; color: var(--scarf); }
+.card p { color: var(--dim); font-size: 14px; line-height: 1.7; margin: 12px 0 16px; }
+.keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 13px; margin-bottom: 20px; }
+.keys kbd { font-family: var(--f-num); font-weight: 700; color: var(--moon); border: 1px solid var(--line); border-radius: 5px; padding: 1px 7px; text-align: center; }
+.keys span { color: var(--dim); align-self: center; }
+.go { width: 100%; padding: 13px; font-size: 17px; font-weight: 700; border: 0; border-radius: 8px; background: var(--scarf); letter-spacing: .2em; }
+.ach { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin: 14px 0 18px; }
+.ai { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; opacity: .45; }
+.ai.got { opacity: 1; border-color: rgba(255,215,94,.5); }
+.ai i { font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none;
+  font-family: var(--f-num); font-size: 12px; font-weight: 700; background: rgba(243,235,211,.12); }
+.ai.got i { background: var(--gold); color: var(--ink); }
+.ai b { font-size: 13px; display: block; }
+.ai span { font-size: 11.5px; color: var(--dim); }
+.qual { font-family: var(--f-num); }
+@media (max-width: 720px) {
+  .tc { top: calc(max(12px, env(safe-area-inset-top, 0px)) + 132px); left: auto; right: max(16px, env(safe-area-inset-right, 0px));
+    transform: none; justify-content: flex-end; max-width: calc(100% - 150px); }
+  .tr { width: 124px; } .tr canvas { width: 108px; height: 68px; } .spd { font-size: 24px; margin-top: -20px; }
+  .val { font-size: 16px; } .val.score { font-size: 20px; }
+  .toasts { top: calc(max(12px, env(safe-area-inset-top, 0px)) + 230px); }
+}
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } .msg { transition: none; } }
+</style>
+
+<canvas id="gl"></canvas>
+<div class="tint" id="tint"></div>
+<div class="pov" id="pov"></div>
+
+<div class="hud">
+  <div class="tl panel">
+    <span class="lbl">得分</span><span class="val score" id="hScore">0</span>
+    <span class="lbl">鱼</span><span class="val" id="hFish">0</span>
+    <span class="lbl">连击</span><span class="val combo" id="hCombo">×0</span>
+    <span class="lbl">里程</span><span class="val" id="hDist">0.00 km</span>
+  </div>
+  <div class="tc">
+    <span class="chip panel" id="hTime">黄昏</span>
+    <span class="chip panel" id="hCam">镜头 · 追尾</span>
+    <span class="chip auto" id="hAuto" hidden>自动驾驶</span>
+  </div>
+  <div class="tr panel">
+    <canvas id="gauge" width="260" height="164"></canvas>
+    <div class="spd"><span id="hSpd">0</span> <small>KM/H</small></div>
+    <div class="rpm">踏频 <span id="hRpm">0</span> RPM</div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="toasts" id="toasts"></div>
+  <div class="bl panel">
+    <kbd>W</kbd><kbd>S</kbd>加速/刹车 <kbd>A</kbd><kbd>D</kbd>变道 <kbd>空格</kbd>跳跃 <kbd>T</kbd>展翅翘头<br>
+    <kbd>C</kbd>切换镜头 <kbd>M</kbd>声音 <kbd>H</kbd>成就 · 画质 <span class="qual" id="hQ">—</span> · <span class="qual" id="hFps">—</span> FPS
+  </div>
+  <div class="btns">
+    <button class="hb panel" id="bCam" type="button">镜头</button>
+    <button class="hb panel" id="bMute" type="button">声音：开</button>
+    <button class="hb panel" id="bAch" type="button">成就 <span id="hAch">0/14</span></button>
+  </div>
+</div>
+
+<div class="touch" id="touch">
+  <div class="tgrp">
+    <button class="tbtn big" id="tL" type="button">◀</button>
+    <button class="tbtn big" id="tR" type="button">▶</button>
+  </div>
+  <div class="tgrp">
+    <div class="tcol">
+      <button class="tbtn" id="tT" type="button">展翅</button>
+      <button class="tbtn" id="tS" type="button">刹车</button>
+    </div>
+    <div class="tcol">
+      <button class="tbtn" id="tJ" type="button">跳</button>
+      <button class="tbtn big" id="tW" type="button">加速</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="start">
+  <div class="card panel">
+    <h1>鹈鹕<em>海岸</em>骑行</h1>
+    <p>戴着头盔和墨镜的鹈鹕沿着海岸公路骑车，一路捞起跃出海面的鱼。天色会从黄昏慢慢暗成星空月夜。放开按键几秒后，它会自己驾驶去追鱼。</p>
+    <div class="keys">
+      <kbd>W / S</kbd><span>加速 / 刹车，音乐节奏跟着踏频走</span>
+      <kbd>A / D</kbd><span>变道抓鱼，高处的鱼要跳起来才够得着</span>
+      <kbd>空格</kbd><span>跳跃，越过路锥</span>
+      <kbd>T</kbd><span>按住展翅抬前轮，压过水洼不减速</span>
+      <kbd>C</kbd><span>切换镜头：追尾 / 侧拍 / 航拍 / 电影运镜 / 鹈鹕视角</span>
+      <kbd>M · H</kbd><span>声音开关 · 成就列表</span>
+    </div>
+    <button class="go" id="go" type="button">出 发</button>
+  </div>
+</div>
+
+<div class="overlay" id="achPanel" hidden>
+  <div class="card panel">
+    <h1 style="font-size:40px">成就</h1>
+    <div class="ach" id="achList"></div>
+    <button class="go" id="achClose" type="button">继续骑行</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sky.js"></script>
+<script src="js/ocean.js"></script>
+<script src="js/world.js"></script>
+<script src="js/pelican.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
